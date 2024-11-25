@@ -1,16 +1,19 @@
 add_rules("mode.debug", "mode.release")
-add_requires("gtest")
-target("snova")
+add_requires("gtest", "libffi")
+
+target("supernova")
     set_languages("c++23")
     set_kind("binary")
+    add_packages("libffi")
     add_files("src/*.cpp")
 
-target("snova-test")
-add_packages("gtest")
-set_languages("c++23")
-set_kind("binary")
-add_includedirs("src/")
-add_files("test/*.cpp")
+target("supernova-test")
+    add_packages("gtest")
+    set_languages("c++23")
+    set_kind("binary")
+    add_packages("libffi")
+    add_includedirs("src/")
+    add_files("test/*.cpp")
 
 
 --

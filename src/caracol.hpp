@@ -3,10 +3,31 @@
 #include <cstring>
 #include <iostream>
 #include <ostream>
-
+#include <math.h>
 namespace caracol {
 /// @brief Enumeration of instructions supported by the virtual machine
 enum Instruction {
+  /// 0 <- 1 = 2
+  EQ32I,
+  /// 0 <- 1 = 2
+  EQ32F,
+  /// 0 <- 1 > 2
+  GT32I,
+  /// 0 <- 1 > 2
+  GT32F,
+  /// 0 <- 1 < 2
+  LT32I,
+  /// 0 <- 1 < 2
+  LT32F,
+  /// 0 <- 1 >= 2
+  GE32I,
+  /// 0 <- 1 >= 2
+  GE32F,
+  /// 0 <- 1 <= 2
+  LE32I,
+  /// 0 <- 1 <= 2
+  LE32F,
+
   /// 0 <- 1 && 2
   AND,
   /// 0 <- 1 || 2
@@ -34,11 +55,20 @@ enum Instruction {
   PRINTC,
   PRINTB,
   PRINTS,
-  //
-  // PUSH,
-  // PUSHP,
-  // POP,
-  // POPP,
+
+  // $PC = 0
+  JUMP,
+  // IF(1) $PC = 0
+  JUMP_IF,
+  // $PC += 0
+  JUMP_REL,
+  // IF(1) $PC += 0
+  JUMP_REL_IF,
+
+  PUSH,
+  PUSHP,
+  POP,
+  POPP,
   //
   // INCR,
   // DECR,
@@ -73,7 +103,7 @@ template <unsigned long long memory_size>
 class vm {
 private:
   int64_t memory[memory_size] = {};
-  int64_t $PC{0}, $SP{0}, SP_LIMIT{0};
+  int64_t $PC{0}, $SP{memory_size-1}, SP_LIMIT{0};
 
 public:
   const int64_t size = memory_size;
@@ -103,7 +133,7 @@ public:
    */
   inline void verify_sp_for_push(const int &size = sizeof(int64_t)) const
   {
-    if ($SP < SP_LIMIT) {
+    if ($SP <= SP_LIMIT) {
       std::cerr
           << "[stack overflow]:\n- descr: the process exceed the upper stack "
              "limit, this means that there is no memory available to push (L = "
@@ -121,7 +151,8 @@ public:
    */
   inline void verify_sp_for_pop(const int &size = sizeof(int64_t)) const
   {
-    if ($SP >= memory_size) {
+
+    if ($SP+1 >= memory_size) {
       std::cerr
           << "[stack underflow]:\n- descr: the process exceed the lower stack "
              "limit (L = "
@@ -210,11 +241,61 @@ public:
    * @brief Start executing the instructions in the memory
    */
   inline constexpr void start() {
-    constexpr int memblock_size = sizeof(int64_t);
+    // constexpr int memblock_size = sizeof(int64_t);
     while (true) {
       switch ((Instruction)*fetch($PC)) {
       case HALT:
         return;
+      case EQ32I:
+        *(bool*)*fetch($PC + 1) =
+          *(int32_t*)*fetch($PC + 2) == *(int32_t*)*fetch($PC + 3);
+        $PC += 4;
+        break;
+      case EQ32F:
+        *(bool*)*fetch($PC + 1) =
+          *(float*)*fetch($PC + 2) == *(float*)*fetch($PC + 3);
+        $PC += 4;
+        break;
+      case GT32I:
+        *(bool*)*fetch($PC + 1) =
+          *(int32_t*)*fetch($PC + 2) > *(int32_t*)*fetch($PC + 3);
+        $PC += 4;
+        break;
+      case GT32F:
+        *(bool*)*fetch($PC + 1) =
+          *(float*)*fetch($PC + 2) > *(float*)*fetch($PC + 3);
+        $PC += 4;
+        break;
+      case LT32I:
+        *(bool*)*fetch($PC + 1) =
+          *(int32_t*)*fetch($PC + 2) < *(int32_t*)*fetch($PC + 3);
+        $PC += 4;
+        break;
+      case LT32F:
+        *(bool*)*fetch($PC + 1) =
+          *(float*)*fetch($PC + 2) < *(float*)*fetch($PC + 3);
+        $PC += 4;
+        break;
+      case GE32I:
+        *(bool*)*fetch($PC + 1) =
+          *(int32_t*)*fetch($PC + 2) >= *(int32_t*)*fetch($PC + 3);
+        $PC += 4;
+        break;
+      case GE32F:
+        *(bool*)*fetch($PC + 1) =
+          *(float*)*fetch($PC + 2) >= *(float*)*fetch($PC + 3);
+        $PC += 4;
+        break;
+      case LE32F:
+        *(bool*)*fetch($PC + 1) =
+          *(float*)*fetch($PC + 2) <= *(float*)*fetch($PC + 3);
+        $PC += 4;
+        break;
+      case LE32I:
+        *(bool*)*fetch($PC + 1) =
+          *(int32_t*)*fetch($PC + 2) <= *(int32_t*)*fetch($PC + 3);
+        $PC += 4;
+        break;
       case ADD32I:
         *(int32_t*)*fetch($PC + 1) =
           *(int32_t*)*fetch($PC + 2) + *(int32_t*)*fetch($PC + 3);
@@ -287,6 +368,44 @@ public:
         break;
       case PRINTB:
         std::cout << (*(bool*)(*fetch($PC + 1)) ? "true" : "false");
+        $PC += 2;
+        break;
+      case JUMP:
+        $PC = *fetch($PC + 1);
+        break;
+      case JUMP_IF:
+        if(*(bool*)*fetch($PC + 2))
+          $PC = *fetch($PC + 1);
+        else
+          $PC += 3;
+        break;
+      case JUMP_REL:
+        $PC += *fetch($PC + 1);
+        break;
+      case JUMP_REL_IF:
+        if(*(bool*)*fetch($PC + 2))
+          $PC += *fetch($PC + 1);
+        else
+          $PC += 3;
+        break;
+      case PUSH:
+        verify_sp_for_push();
+        *fetch($SP--) = *fetch($PC + 1);
+        $PC += 2;
+        break;
+      case POP:
+        verify_sp_for_pop();
+        *fetch($PC+1) = *fetch(++$SP);
+        $PC += 2;
+        break;
+      case PUSHP:
+        verify_sp_for_push();
+        *fetch($SP--) = *(int64_t*)*fetch($PC + 1);
+        $PC += 2;
+        break;
+      case POPP:
+        verify_sp_for_pop();
+        *(int64_t*)*fetch($PC+1) = *fetch(++$SP);
         $PC += 2;
         break;
         /*
