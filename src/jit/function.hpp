@@ -160,6 +160,26 @@ namespace supernova::jit
             co->idiv(r, lhs, rhs);
         }
 
+        void increment(const asmjit::x86::Gp & r) const
+        {
+            co->inc(r);
+        }
+
+        void increment(const asmjit::x86::Xmm & r)
+        {
+            add(r, r, xmmss(1.0f));
+        }
+
+        void decrement(const asmjit::x86::Gp & r) const
+        {
+            co->dec(r);
+        }
+
+        void decrement(const asmjit::x86::Xmm & r)
+        {
+            sub(r, r, xmmss(1.0f));
+        }
+
         void return_value(const asmjit::x86::Gp & r) const
         {
             if (signature.ret() != asmjit::TypeId::kInt32 and signature.ret() != asmjit::TypeId::kInt8)

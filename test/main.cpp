@@ -335,6 +335,74 @@ TEST(JIT, native_call_args_return)
     }
 }
 
+TEST(JIT, increment_i32)
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<int>());
+    auto result = builder->i32(40);
+    builder->increment(result);
+    builder->return_value(result);
+    const auto func = builder->build<int()>();
+    ASSERT_NE(func, nullptr);
+    if (func)
+    {
+        int  r = func();
+        ASSERT_EQ(r, 41);
+    }
+}
+
+TEST(JIT, increment_xmm)
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<float>());
+    auto result = builder->xmmss(40);
+    builder->increment(result);
+    builder->return_value(result);
+    const auto func = builder->build<float()>();
+    ASSERT_NE(func, nullptr);
+    if (func)
+    {
+        float  r = func();
+        ASSERT_EQ(r, 41);
+    }
+}
+
+TEST(JIT, decrement_i32)
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<int>());
+    auto result = builder->i32(40);
+    builder->decrement(result);
+    builder->return_value(result);
+    const auto func = builder->build<int()>();
+    ASSERT_NE(func, nullptr);
+    if (func)
+    {
+        int  r = func();
+        ASSERT_EQ(r, 39);
+    }
+}
+
+TEST(JIT, decrement_xmm)
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<float>());
+    auto result = builder->xmmss(40);
+    builder->decrement(result);
+    builder->return_value(result);
+    const auto func = builder->build<float()>();
+    ASSERT_NE(func, nullptr);
+    if (func)
+    {
+        float  r = func();
+        ASSERT_EQ(r, 39);
+    }
+}
+
 int main()
 {
     testing::InitGoogleTest();
