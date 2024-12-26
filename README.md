@@ -15,9 +15,9 @@ int main()
     using namespace supernova::jit;
     const auto rt = std::make_shared<asmjit::JitRuntime>();
     const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<int>());
-    asmjit::x86::Gp arg0 = builder->i32(39);
-    asmjit::x86::Gp arg1 = builder->i32(40);
-    asmjit::x86::Gp result = builder->i32(1);
+    auto arg0 = builder->i32(39);
+    auto arg1 = builder->i32(40);
+    auto result = builder->i32(1);
 
     const auto end = builder->label();
     builder->jump_equal(arg0, arg1, end);

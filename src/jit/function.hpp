@@ -326,17 +326,17 @@ namespace supernova::jit
             for (int i = 0; i < args.size(); i++)
             {
                 if (not (args[i].isGp32() or args[i].isXmm()))
-                    throw std::invalid_argument(fmt::format("unsupported argument type for arg[{}]: {}", i, static_cast<int>(asmjit::x86::Reg::typeIdOf(args[i].type()))));
+                    throw std::invalid_argument(fmt::format("unsupported callee argument type for arg[{}]: {}", i, static_cast<int>(asmjit::x86::Reg::typeIdOf(args[i].type()))));
                 if (args[i].isGp32() and signature.arg(i) != asmjit::TypeId::kInt32 or args[i].isXmm() and signature.arg(i) != asmjit::TypeId::kFloat32)
-                    throw std::invalid_argument(fmt::format("incorrect argument type for arg[{}]: {}, expected: {}", i, static_cast<int>(args[i].type()),static_cast<int>(signature.arg(i))));
+                    throw std::invalid_argument(fmt::format("incorrect callee argument type for arg[{}]: {}, expected: {}", i,static_cast<int>(asmjit::x86::Reg::typeIdOf(args[i].type())),static_cast<int>(signature.arg(i))));
                 node->setArg(i, args[i]);
             }
             if (return_to)
             {
                 if (not (return_to->isGp32() or return_to->isXmm()))
-                    throw std::invalid_argument("unsupported return type");
+                    throw std::invalid_argument("unsupported callee return type");
                 if (return_to->isGp32() and signature.ret() != asmjit::TypeId::kInt32 or return_to->isXmm() and signature.ret() != asmjit::TypeId::kFloat32)
-                    throw std::invalid_argument(fmt::format("incorrect return type for {}, expected: {}", static_cast<int>(return_to->type()),static_cast<int>(signature.ret())));
+                    throw std::invalid_argument(fmt::format("incorrect callee return type for {}, expected: {}", static_cast<int>(asmjit::x86::Reg::typeIdOf(return_to->type())),static_cast<int>(signature.ret())));
                 node->setRet(0, *return_to);
             }
         }
