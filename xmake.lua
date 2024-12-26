@@ -1,21 +1,19 @@
 add_rules("mode.debug", "mode.release")
-add_requires("gtest", "libffi", "asmjit", "fmt")
+add_requires("gtest", "asmjit", "fmt")
 
 target("supernova")
     set_languages("c++23")
     set_kind("binary")
-    add_packages("libffi", "asmjit", "fmt")
-    add_includedirs("C:\\Users\\dte\\Downloads\\llvm-18.1.8-windows-x86-msvc17-msvcrt\\llvm-18.1.8-windows-x86-msvc17-msvcrt\\include")
-    add_linkdirs("C:\\Users\\dte\\Downloads\\llvm-18.1.8-windows-x86-msvc17-msvcrt\\llvm-18.1.8-windows-x86-msvc17-msvcrt\\lib")
+    add_packages("asmjit", "fmt")
     add_files("src/*.cpp")
 
---target("supernova-test")
---    add_packages("gtest")
---    set_languages("c++23")
---    set_kind("binary")
---    add_packages("libffi", "asmjit")
---    add_includedirs("src/")
---    add_files("test/*.cpp")
+target("supernova-test")
+    add_packages("gtest")
+    set_languages("c++23")
+    set_kind("binary")
+    add_packages("asmjit", "fmt")
+    add_includedirs("src/")
+    add_files("test/*.cpp")
 
 
 --

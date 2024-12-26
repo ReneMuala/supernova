@@ -1,28 +1,31 @@
-#include <caracol.hpp>
 #include <gtest/gtest.h>
+#include "jit/function.hpp"
 //
 // Created by dte on 11/24/2024.
 //
 
-TEST(VM, SET)
+TEST(JIT, jump_equal)
 {
-    using namespace caracol;
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<int>());
+    asmjit::x86::Gp arg0 = builder->i32(40);
+    asmjit::x86::Gp arg1 = builder->i32(40);
+    asmjit::x86::Gp result = builder->i32(1);
 
-    int a = 5;
-
-    caracol::vm<20> vm;
-    int64_t insn[] = {
-        SET, addr(a),10,
-        SET, vm(0), 100,
-        HALT
-    };
-    vm.set_pc(vm.size-sizeof(insn)/sizeof(int64_t));
-    vm.write(vm.size-sizeof(insn)/sizeof(int64_t), (void*)&insn, sizeof(insn));
-    vm.start();
-    ASSERT_EQ(a, 10);
-    ASSERT_EQ(*vm.fetch(0), 100);
+    const auto end = builder->label();
+    builder->jump_equal(arg0, arg1, end);
+    builder->move(result, builder->i32_const(0));
+    builder->bind(end);
+    builder->return_value(result);
+    const auto func = builder->build<int()>();
+    ASSERT_NE(func, nullptr);
+    if (func)
+    {
+        int  r = func();
+        ASSERT_EQ(r, 1);
+    }
 }
-
 
 int main()
 {

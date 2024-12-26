@@ -312,33 +312,12 @@ void playground(bool sum)
     }
 }
 
-bool test_jump_equal()
-{
-    using namespace supernova::jit;
-    const auto rt = std::make_shared<asmjit::JitRuntime>();
-    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<int>());
-    asmjit::x86::Gp arg0 = builder->i32(39);
-    asmjit::x86::Gp arg1 = builder->i32(40);
-    asmjit::x86::Gp result = builder->i32(1);
 
-    const auto end = builder->label();
-    builder->jump_equal(arg0, arg1, end);
-    builder->move(result, builder->i32_const(0));
-    builder->bind(end);
-    builder->return_value(result);
-    if (const auto func = builder->build<int()>())
-    {
-        int  r = func();
-        fmt::println(__FUNCTION__": func() = {}", r);
-        return r == 1;
-    }
-    return false;
-}
 
 
 int main(int argc, char** argv)
 try {
-    test_jump_equal();
+    // test_jump_equal();
     // playground(true);
     // playground(false);
     test_return();
