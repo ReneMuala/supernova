@@ -1,61 +1,360 @@
-#include <cstdint>
-#include "caracol.hpp"
-using namespace caracol;
+#include "jit/function.hpp"
 
-int main(int argc, char** argv) {
-    int8_t end = 10;
-    int a = 20;
-    int b = 10;
-    int c;
-    bool x = false;
-    bool y = false;
-    bool z;
-    char * message = (char*)"this is the message";
-    auto val = 3.14159265358979323846;
-    caracol::vm<3000> vm;
-    /* clang-format off */
+bool test_return()
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<float, float>());
+    asmjit::x86::Xmm arg0 = builder->xmmss();
+    builder->fetch_argument(0, arg0);
+    builder->return_value(arg0);
+    if (const auto func = builder->build<float(float)>())
+    {
+        float a = 90;
+        fmt::println(__FUNCTION__": func({}) = {}",a, func(a));
+        return true;
+    }
+    return false;
+}
 
-    int64_t insn[] = {
-        JUMP_REL_IF, 5, addr(x),
-        PRINTS, addr(*message),
-        AND, addr(z), addr(x), addr(y),
-        PRINTB, addr(z),
-        OR, addr(z), addr(x), addr(y),
-        PRINTB, addr(z),
-        ADD32I, addr(c), addr(a), addr(b),
-        PRINT32I, addr(c),
-        PRINT32I, addr(a),
-        PRINT32I, vm(1),
-        SUB32I, vm(2), vm(1), addr(a),
-        PRINT32I, vm(2),
-        PUSHP, vm(2),
-        SET, vm(2), 10,
-        PRINT32I, vm(2),
-        POPP, vm(2),
-        PRINT32I, vm(2),
-        // PRINTS, addr(*name),
-        // PRINT32I, vm(2),
-        // LOAD, 8, 10,
-        // PRINT32F, 0,
-        // PRINTC, 8,
-        // PRINT32F, 4,
-        // DIV32F, 0,4,
-        // PRINTC, 8,
-        // PRINT32F, 0,
-        // LOAD, 0, 0,
-        // LOAD, 1, end,
-        // PRINTi32, 0,
-        // INCR, 0,
-        // RJLE, 0, 1, -4,
-        HALT,
-    };
-    /* clang-format on */
-    vm.set_pc(100);
-    // float a = 3.14159;
-    // float b = 2.71828;
-    // vm.write(0, (void*)&a, sizeof(a));
-    // vm.write(4, (void*)&b, sizeof(b));
-    vm.write(100, (void*)&insn, sizeof(insn));
-    vm.start();
-    return 0;
+bool test_add_xmm()
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<float, float, float>());
+    auto arg0 = builder->xmmss();
+    asmjit::x86::Xmm arg1 = builder->xmmss();
+    asmjit::x86::Xmm result = builder->xmmss();
+    builder->fetch_argument(0, arg0);
+    builder->fetch_argument(1, arg1);
+    builder->add(result, arg0, arg1);
+    builder->return_value(result);
+    if (const auto func = builder->build<float(float, float)>())
+    {
+        float a = 90, b = 90, r = func(a, b);
+        fmt::println(__FUNCTION__": func({}, {}) = {}",a, b, r);
+        return r == a + b;
+    }
+    return false;
+}
+
+bool test_sub_xmm()
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<float, float, float>());
+    asmjit::x86::Xmm arg0 = builder->xmmss();
+    asmjit::x86::Xmm arg1 = builder->xmmss();
+    asmjit::x86::Xmm result = builder->xmmss();
+    builder->fetch_argument(0, arg0);
+    builder->fetch_argument(1, arg1);
+    builder->sub(result, arg0, arg1);
+    builder->return_value(result);
+    if (const auto func = builder->build<float(float, float)>())
+    {
+        float a = 90, b = 90, r = func(a, b);
+        fmt::println(__FUNCTION__": func({}, {}) = {}",a, b, r);
+        return r == a - b;
+    }
+    return false;
+}
+
+bool test_mul_xmm()
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<float, float, float>());
+    asmjit::x86::Xmm arg0 = builder->xmmss();
+    asmjit::x86::Xmm arg1 = builder->xmmss();
+    asmjit::x86::Xmm result = builder->xmmss();
+    builder->fetch_argument(0, arg0);
+    builder->fetch_argument(1, arg1);
+    builder->mul(result, arg0, arg1);
+    builder->return_value(result);
+    if (const auto func = builder->build<float(float, float)>())
+    {
+        float a = 90, b = 90, r = func(a, b);
+        fmt::println(__FUNCTION__": func({}, {}) = {}",a, b, r);
+        return r == a * b;
+    }
+    return false;
+}
+
+bool test_div_xmm()
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<float, float, float>());
+    asmjit::x86::Xmm arg0 = builder->xmmss();
+    asmjit::x86::Xmm arg1 = builder->xmmss();
+    asmjit::x86::Xmm result = builder->xmmss();
+    builder->fetch_argument(0, arg0);
+    builder->fetch_argument(1, arg1);
+    builder->div(result, arg0, arg1);
+    builder->return_value(result);
+    if (const auto func = builder->build<float(float, float)>())
+    {
+        float a = 90, b = 90, r = func(a, b);
+        fmt::println(__FUNCTION__": func({}, {}) = {}",a, b, r);
+        return r == a / b;
+    }
+    return false;
+}
+
+bool test_add_i32()
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<int, int, int>());
+    asmjit::x86::Gp arg0 = builder->i32();
+    asmjit::x86::Gp arg1 = builder->i32();
+    asmjit::x86::Gp result = builder->i32();
+    builder->fetch_argument(0, arg0);
+    builder->fetch_argument(1, arg1);
+    builder->add(result, arg0, arg1);
+    builder->return_value(result);
+    if (const auto func = builder->build<int(int, int)>())
+    {
+        int a = 90, b = 90, r = func(a, b);
+        fmt::println(__FUNCTION__": func({}, {}) = {}",a, b, r);
+        return r == a + b;
+    }
+    return false;
+}
+
+bool test_sub_i32()
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<int, int, int>());
+    asmjit::x86::Gp arg0 = builder->i32();
+    asmjit::x86::Gp arg1 = builder->i32();
+    asmjit::x86::Gp result = builder->i32();
+    builder->fetch_argument(0, arg0);
+    builder->fetch_argument(1, arg1);
+    builder->sub(result, arg0, arg1);
+    builder->return_value(result);
+    if (const auto func = builder->build<int(int, int)>())
+    {
+        int a = 90, b = 90, r = func(a, b);
+        fmt::println(__FUNCTION__": func({}, {}) = {}",a, b, r);
+        return r == a - b;
+    }
+    return false;
+}
+
+bool test_mul_i32()
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<int, int, int>());
+    asmjit::x86::Gp arg0 = builder->i32();
+    asmjit::x86::Gp arg1 = builder->i32();
+    asmjit::x86::Gp result = builder->i32();
+    builder->fetch_argument(0, arg0);
+    builder->fetch_argument(1, arg1);
+    builder->mul(result, arg0, arg1);
+    builder->return_value(result);
+    if (const auto func = builder->build<int(int, int)>())
+    {
+        int a = 90, b = 90, r = func(a, b);
+        fmt::println(__FUNCTION__": func({}, {}) = {}",a, b, r);
+        return r == a * b;
+    }
+    return false;
+}
+
+bool test_div_i32()
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<int, int, int>());
+    asmjit::x86::Gp arg0 = builder->i32();
+    asmjit::x86::Gp arg1 = builder->i32();
+    asmjit::x86::Gp result = builder->i32();
+    builder->fetch_argument(0, arg0);
+    builder->fetch_argument(1, arg1);
+    builder->div(result, arg0, arg1);
+    builder->return_value(result);
+    if (const auto func = builder->build<int(int, int)>())
+    {
+        int a = 90, b = 20, r = func(a, b);
+        fmt::println(__FUNCTION__": func({}, {}) = {}",a, b, r);
+        return r == a / b;
+    }
+    return false;
+}
+
+bool test_mod_i32()
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<int, int, int>());
+    asmjit::x86::Gp arg0 = builder->i32();
+    asmjit::x86::Gp arg1 = builder->i32();
+    asmjit::x86::Gp result = builder->i32();
+    builder->fetch_argument(0, arg0);
+    builder->fetch_argument(1, arg1);
+    builder->mod(result, arg0, arg1);
+    builder->return_value(result);
+    if (const auto func = builder->build<int(int, int)>())
+    {
+        int a = 90, b = 20, r = func(a, b);
+        fmt::println(__FUNCTION__": func({}, {}) = {}",a, b, r);
+        return r == a % b;
+    }
+    return false;
+}
+
+void native_function()
+{
+    fmt::println("\t\tnative_function()");
+}
+
+bool test_call()
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<void>());
+    builder->call(native_function, asmjit::FuncSignature::build<void>(),{},{});
+    builder->return_void();
+    if (const auto func = builder->build<void()>())
+    {
+        func();
+        fmt::println(__FUNCTION__": func()");
+        return true;
+    }
+    return false;
+}
+
+void native_function_args(int a, int b, int c, float d, float e, float f)
+{
+    fmt::println("\t\tnative_function_args({},{},{},{},{},{})", a, b, c, d, e, f);
+}
+
+bool test_call_args()
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<void>());
+    auto a = builder->i32(1);
+    auto b = builder->i32(2);
+    auto c = builder->i32(3);
+
+    auto d = builder->xmmss(4.5);
+    auto e = builder->xmmss(5.5);
+    auto f = builder->xmmss(6.5);
+
+    builder->call(native_function_args, asmjit::FuncSignature::build<void, int, int, int, float, float, float>(),{a, b, c, d, e, f},{});
+    builder->return_void();
+    if (const auto func = builder->build<void()>())
+    {
+        func();
+        fmt::println(__FUNCTION__": func()");
+        return true;
+    }
+    return false;
+}
+
+float native_function_args_return(int a, int b, int c, float d, float e, float f)
+{
+    fmt::println("\t\tnative_function_args_return({},{},{},{},{},{})", a, b, c, d, e, f);
+    return a + b + c + d + e + f;
+}
+
+bool test_call_args_return()
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<float>());
+    auto a = builder->i32(1);
+    auto b = builder->i32(2);
+    auto c = builder->i32(3);
+
+    auto d = builder->xmmss(4.5);
+    auto e = builder->xmmss(5.5);
+    auto f = builder->xmmss(6.5);
+
+    auto r = builder->xmmss();
+    builder->call(native_function_args_return, asmjit::FuncSignature::build<float, int, int, int, float, float, float>(),{a, b, c, d, e, f},{r});
+    builder->return_value(r);
+    if (const auto func = builder->build<float()>())
+    {
+        const float a = 1, b = 2, c = 3, d = 4.5, e = 5.5, f = 6.5, r = func();
+        fmt::println(__FUNCTION__": func() = {}", r);
+        return a + b + c + d + e + f == r;
+    }
+    return false;
+}
+
+void playground(bool sum)
+{
+    using namespace supernova::jit;
+
+    auto rt = std::make_shared<asmjit::JitRuntime>();
+    auto builder = function_builder::create(rt, asmjit::FuncSignature::build<int, int, int>());
+    auto a = builder->i32();
+    auto b = builder->i32();
+    auto c = builder->i32();
+    builder->fetch_argument(0, a);
+    builder->fetch_argument(1, b);
+    if (sum)
+        builder->add(c, a, b);
+    else
+        builder->sub(c, a, b);
+    builder->return_value(c);
+
+    auto func = builder->build<int(int, int)>();
+    if (func)
+    {
+        int a = 40, b = 60;
+        fmt::println("func({},{}) = {}", a,b, func(a,b));
+    }
+}
+
+bool test_jump_equal()
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<int>());
+    asmjit::x86::Gp arg0 = builder->i32(39);
+    asmjit::x86::Gp arg1 = builder->i32(40);
+    asmjit::x86::Gp result = builder->i32(1);
+
+    const auto end = builder->label();
+    builder->jump_equal(arg0, arg1, end);
+    builder->move(result, builder->i32_const(0));
+    builder->bind(end);
+    builder->return_value(result);
+    if (const auto func = builder->build<int()>())
+    {
+        int  r = func();
+        fmt::println(__FUNCTION__": func() = {}", r);
+        return r == 1;
+    }
+    return false;
+}
+
+
+int main(int argc, char** argv)
+try {
+    test_jump_equal();
+    // playground(true);
+    // playground(false);
+    test_return();
+    test_add_xmm();
+    test_sub_xmm();
+    test_mul_xmm();
+    test_div_xmm();
+    test_add_i32();
+    test_sub_i32();
+    test_mul_i32();
+    test_div_i32();
+    test_mod_i32();
+    test_call();
+    test_call_args();
+    test_call_args_return();
+} catch (std::exception& e)
+{
+    fmt::println(stderr, "Uncaught exception:\n{}", e.what());
 }

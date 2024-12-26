@@ -1,34 +1,35 @@
 # Super Nova
-A generic language VM based on [Caracol](https://github.com/renemuala), with a focus on multithreading and stability.
+A generic jit library based on [Asmjit](https://github.com/asmjit/asmjit), with a focus on simplicity and performance.
 
 ## How it looks
 
 > Simple program
 
 ```c++
-#include <caracol.hpp>
+#include "jit/function.hpp"
 
-using namespace caracol;
-int main(){
-    int a = 5;
-    int b;
-    int c;
+int main()
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<int>());
+    asmjit::x86::Gp arg0 = builder->i32(39);
+    asmjit::x86::Gp arg1 = builder->i32(40);
+    asmjit::x86::Gp result = builder->i32(1);
 
-    caracol::vm<20> vm;
-    int64_t insn[] = {
-        // b = 10
-        SET, addr(b),10,
-        // c = a + b
-        ADD32I, addr(c), addr(a), addr(b),
-        HALT
-    };
-    vm.set_pc(vm.size-sizeof(insn)/sizeof(int64_t));
-    vm.write(vm.size-sizeof(insn)/sizeof(int64_t), (void*)&insn, sizeof(insn));
-    vm.start();
-    // c is now: 15
-    std::cout << "c is now: " << c << std::endl;
+    const auto end = builder->label();
+    builder->jump_equal(arg0, arg1, end);
+    builder->move(result, builder->i32_const(0));
+    builder->bind(end);
+    builder->return_value(result);
+    if (const auto func = builder->build<int()>())
+    {
+        int  r = func();
+        fmt::println(__FUNCTION__": func() = {}", r);
+        return 0;
+    }
+    return 1;
 }
-
 ```
 
 
@@ -49,4 +50,4 @@ To build the Super Nova VM and its associated tests, follow these steps:
 
 1. Install the necessary prerequisites for your operating system.
 2. Run `xmake build` in the project directory.
-3. The compiled binaries, `snova` (the VM) and `snova-tests` (the tests), will be located in the `build/OS/ARCH/release` directory.
+3. The compiled binaries, `supernova` (the VM) and `supernova-tests` (the tests), will be located in the `build/OS/ARCH/release` directory.
