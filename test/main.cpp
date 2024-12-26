@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include "jit/function.hpp"
 //
-// Created by dte on 11/24/2024.
+// Created by ReneMuala on 11/24/2024.
 //
 
 TEST(JIT, jump_equal)
