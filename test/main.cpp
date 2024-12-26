@@ -297,7 +297,7 @@ float native_function_args_return(int a, int b, int c, float d, float e, float f
     native_function_args_return_d = d;
     native_function_args_return_e = e;
     native_function_args_return_f = f;
-    return a + b + c + d + e + f;
+    return static_cast<float>(a + b + c) + d + e + f;
 }
 
 TEST(JIT, native_call_args_return)
@@ -374,7 +374,7 @@ TEST(JIT, decrement_i32)
     using namespace supernova::jit;
     const auto rt = std::make_shared<asmjit::JitRuntime>();
     const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<int>());
-    auto result = builder->i32(40);
+    const auto result = builder->i32(40);
     builder->decrement(result);
     builder->return_value(result);
     const auto func = builder->build<int()>();
