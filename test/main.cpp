@@ -218,6 +218,113 @@ TEST(JIT, mod_i8)
     }
 }
 
+TEST(JIT, add_i16)
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<short, short, short>());
+    auto arg0 = builder->i16();
+    auto arg1 = builder->i16();
+    auto result = builder->i16();
+    builder->fetch_argument(0, arg0);
+    builder->fetch_argument(1, arg1);
+    builder->add(result, arg0, arg1);
+    builder->return_value(result);
+    const auto func = builder->build<short(short, short)>();
+    ASSERT_NE(func, nullptr);
+    if (func)
+    {
+        short a = 50, b = 50, r = func(a, b);
+        ASSERT_EQ(r, a+b);
+    }
+}
+
+TEST(JIT, sub_i16)
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<short, short, short>());
+    auto arg0 = builder->i16();
+    auto arg1 = builder->i16();
+    auto result = builder->i16();
+    builder->fetch_argument(0, arg0);
+    builder->fetch_argument(1, arg1);
+    builder->sub(result, arg0, arg1);
+    builder->return_value(result);
+    const auto func = builder->build<short(short, short)>();
+    ASSERT_NE(func, nullptr);
+    if (func)
+    {
+        short a = 50, b = 50, r = func(a, b);
+        ASSERT_EQ(r, a-b);
+    }
+}
+
+TEST(JIT, mul_i16)
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<short, short, short>());
+    auto arg0 = builder->i16();
+    auto arg1 = builder->i16();
+    auto result = builder->i16();
+    builder->fetch_argument(0, arg0);
+    builder->fetch_argument(1, arg1);
+    builder->mul(result, arg0, arg1);
+    builder->return_value(result);
+    const auto func = builder->build<short(short, short)>();
+    ASSERT_NE(func, nullptr);
+    if (func)
+    {
+        short a = 50, b = 50, r = func(a, b);
+        ASSERT_EQ(r, a*b);
+    }
+}
+
+TEST(JIT, div_i16)
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<short, short, short>());
+    auto arg0 = builder->i16();
+    auto arg1 = builder->i16();
+    auto result = builder->i16();
+    builder->fetch_argument(0, arg0);
+    builder->fetch_argument(1, arg1);
+    builder->div(result, arg0, arg1);
+    builder->return_value(result);
+    const auto func = builder->build<short(short, short)>();
+    ASSERT_NE(func, nullptr);
+    if (func)
+    {
+        short a = 50, b = 50, r = func(a, b);
+        ASSERT_EQ(r, a/b);
+    }
+}
+
+TEST(JIT, mod_i16)
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<short, short, short>());
+    auto arg0 = builder->i16();
+    auto arg1 = builder->i16();
+    auto result = builder->i16();
+    builder->fetch_argument(0, arg0);
+    builder->fetch_argument(1, arg1);
+    builder->mod(result, arg0, arg1);
+    builder->return_value(result);
+    const auto func = builder->build<short(short, short)>();
+    ASSERT_NE(func, nullptr);
+    if (func)
+    {
+        short a = 50, b = 50, r = func(a, b);
+        ASSERT_EQ(r, a%b);
+    }
+}
+
+
+
 TEST(JIT, add_i32)
 {
     using namespace supernova::jit;
@@ -577,6 +684,24 @@ TEST(JIT, increment_i8)
     }
 }
 
+TEST(JIT, increment_i16)
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<short>());
+    auto result = builder->i16(40);
+    builder->increment(result);
+    builder->return_value(result);
+    const auto func = builder->build<short()>();
+    ASSERT_NE(func, nullptr);
+    if (func)
+    {
+        short  r = func();
+        ASSERT_EQ(r, 41);
+    }
+}
+
+
 TEST(JIT, increment_i32)
 {
     using namespace supernova::jit;
@@ -644,6 +769,24 @@ TEST(JIT, decrement_i8)
         ASSERT_EQ(r, 39);
     }
 }
+
+TEST(JIT, decrement_i16)
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<short>());
+    auto result = builder->i16(40);
+    builder->decrement(result);
+    builder->return_value(result);
+    const auto func = builder->build<short()>();
+    ASSERT_NE(func, nullptr);
+    if (func)
+    {
+        short  r = func();
+        ASSERT_EQ(r, 39);
+    }
+}
+
 
 TEST(JIT, decrement_i32)
 {

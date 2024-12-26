@@ -14,7 +14,8 @@ namespace supernova::jit
     {
         std::unordered_map<long long, asmjit::x86::Mem> i64_consts;
         std::unordered_map<int, asmjit::x86::Mem> i32_consts;
-        std::unordered_map<int8_t, asmjit::x86::Mem> i8_consts;
+        std::unordered_map<short, asmjit::x86::Mem> i16_consts;
+        std::unordered_map<char, asmjit::x86::Mem> i8_consts;
         std::unordered_map<float, asmjit::x86::Mem> xmms_consts;
         std::shared_ptr<asmjit::JitRuntime> rt;
         std::shared_ptr<asmjit::CodeHolder> code;
@@ -39,12 +40,32 @@ namespace supernova::jit
             return initialized_gp;
         }
 
-        [[nodiscard]] asmjit::x86::Mem i8_const(const int8_t val)
+        [[nodiscard]] asmjit::x86::Mem i8_const(const char val)
         {
             if (not i8_consts.contains(val))
                 i8_consts[val] = co->newByteConst(asmjit::ConstPoolScope::kLocal, val);
             return i8_consts[val];
         }
+
+        [[nodiscard]] asmjit::x86::Gp i16() const
+        {
+            return co->newInt16();
+        }
+
+        [[nodiscard]] asmjit::x86::Gp i16(const short val)
+        {
+            asmjit::x86::Gp initialized_gp = i16();
+            move(initialized_gp, i16_const(val), true);
+            return initialized_gp;
+        }
+
+        [[nodiscard]] asmjit::x86::Mem i16_const(const short val)
+        {
+            if (not i16_consts.contains(val))
+                i16_consts[val] = co->newInt16Const(asmjit::ConstPoolScope::kLocal, val);
+            return i16_consts[val];
+        }
+
 
         [[nodiscard]] asmjit::x86::Xmm xmmss() const
         {
@@ -163,8 +184,8 @@ namespace supernova::jit
 
         void mul(const asmjit::x86::Gp & r, const asmjit::x86::Gp & lhs,const asmjit::x86::Gp & rhs) const // NOLINT
         {
-            // use i32(lhs)*i32(rhs) -> (i8)r for byte
-            if (r.isGpb())
+            // use i32(lhs)*i32(rhs) -> (i8)r for byte or word
+            if (r.isGpb() or rhs.isGpw())
             {
                 const auto _lhs = i32();
                 const auto _rhs = i32();
@@ -183,8 +204,8 @@ namespace supernova::jit
 
         void div(const asmjit::x86::Gp & r, const asmjit::x86::Gp & lhs,const asmjit::x86::Gp & rhs) const // NOLINT
         {
-            // use i32(lhs)/i32(rhs) -> (i8)r for byte
-            if (r.isGpb())
+            // use i32(lhs)/i32(rhs) -> (i8)r for byte or word
+            if (r.isGpb() or rhs.isGpw())
             {
                 const auto _lhs = i32();
                 const auto _rhs = i32();
@@ -208,8 +229,8 @@ namespace supernova::jit
 
         void mod(const asmjit::x86::Gp & r, const asmjit::x86::Gp & lhs,const asmjit::x86::Gp & rhs) const // NOLINT
         {
-            // use i32(lhs)%i32(rhs) -> (i8)r for byte
-            if (r.isGpb())
+            // use i32(lhs)%i32(rhs) -> (i8)r for byte or word
+            if (r.isGpb() or rhs.isGpw())
             {
                 const auto _lhs = i32();
                 const auto _rhs = i32();
