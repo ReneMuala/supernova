@@ -12,8 +12,10 @@ namespace supernova::jit
 {
     struct function_builder
     {
+        std::unordered_map<long long, asmjit::x86::Mem> i64_consts;
         std::unordered_map<int, asmjit::x86::Mem> i32_consts;
-        std::unordered_map<int8_t, asmjit::x86::Mem> i8_consts;
+        std::unordered_map<short, asmjit::x86::Mem> i16_consts;
+        std::unordered_map<char, asmjit::x86::Mem> i8_consts;
         std::unordered_map<float, asmjit::x86::Mem> xmms_consts;
         std::shared_ptr<asmjit::JitRuntime> rt;
         std::shared_ptr<asmjit::CodeHolder> code;
@@ -23,8 +25,8 @@ namespace supernova::jit
         asmjit::FuncNode * node{nullptr};
         void *function{nullptr};
 
-        static std::shared_ptr<function_builder> create(std::shared_ptr<asmjit::JitRuntime> rt, bool logger = false);
-        static std::shared_ptr<function_builder> create(std::shared_ptr<asmjit::JitRuntime> rt, asmjit::FuncSignature signature, bool logger = false);
+        static std::shared_ptr<function_builder> create(const std::shared_ptr<asmjit::JitRuntime>& rt, const bool& logger = false);
+        static std::shared_ptr<function_builder> create(const std::shared_ptr<asmjit::JitRuntime>& rt, const asmjit::FuncSignature& signature, const bool& logger = false);
 
         [[nodiscard]] asmjit::x86::Gp i8() const
         {
@@ -38,12 +40,32 @@ namespace supernova::jit
             return initialized_gp;
         }
 
-        [[nodiscard]] asmjit::x86::Mem i8_const(const int8_t val)
+        [[nodiscard]] asmjit::x86::Mem i8_const(const char val)
         {
             if (not i8_consts.contains(val))
                 i8_consts[val] = co->newByteConst(asmjit::ConstPoolScope::kLocal, val);
             return i8_consts[val];
         }
+
+        [[nodiscard]] asmjit::x86::Gp i16() const
+        {
+            return co->newInt16();
+        }
+
+        [[nodiscard]] asmjit::x86::Gp i16(const short val)
+        {
+            asmjit::x86::Gp initialized_gp = i16();
+            move(initialized_gp, i16_const(val), true);
+            return initialized_gp;
+        }
+
+        [[nodiscard]] asmjit::x86::Mem i16_const(const short val)
+        {
+            if (not i16_consts.contains(val))
+                i16_consts[val] = co->newInt16Const(asmjit::ConstPoolScope::kLocal, val);
+            return i16_consts[val];
+        }
+
 
         [[nodiscard]] asmjit::x86::Xmm xmmss() const
         {
@@ -81,6 +103,25 @@ namespace supernova::jit
             if (not i32_consts.contains(val))
                 i32_consts[val] = co->newInt32Const(asmjit::ConstPoolScope::kLocal, val);
             return i32_consts[val];
+        }
+
+        [[nodiscard]] asmjit::x86::Gp i64() const
+        {
+            return co->newInt64();
+        }
+
+        [[nodiscard]] asmjit::x86::Gp i64(const long long val)
+        {
+            asmjit::x86::Gp initialized_gp = i64();
+            move(initialized_gp, i64_const(val));
+            return initialized_gp;
+        }
+
+        [[nodiscard]] asmjit::x86::Mem i64_const(const long long val)
+        {
+            if (not i64_consts.contains(val))
+                i64_consts[val] = co->newInt64Const(asmjit::ConstPoolScope::kLocal, val);
+            return i64_consts[val];
         }
 
         [[nodiscard]] asmjit::Label label() const
@@ -141,36 +182,102 @@ namespace supernova::jit
             co->sub(r, rhs);
         }
 
-        void mul(const asmjit::x86::Gp & r, const asmjit::x86::Gp & lhs,const asmjit::x86::Gp & rhs) const
+        void mul(const asmjit::x86::Gp & r, const asmjit::x86::Gp & lhs,const asmjit::x86::Gp & rhs) const // NOLINT
         {
+            // use i32(lhs)*i32(rhs) -> (i8)r for byte or word
+            if (r.isGpb() or rhs.isGpw())
+            {
+                const auto _lhs = i32();
+                const auto _rhs = i32();
+                const auto _r = i32();
+
+                co->movzx(_lhs, lhs);
+                co->movzx(_rhs, rhs);
+                mul(_r, _lhs, _rhs);
+                co->movzx(r, _r);
+            } else
+            {
             co->mov(r, lhs);
             co->imul(r, rhs);
+            }
         }
 
-        void div(const asmjit::x86::Gp & r, const asmjit::x86::Gp & lhs,const asmjit::x86::Gp & rhs) const
+        void div(const asmjit::x86::Gp & r, const asmjit::x86::Gp & lhs,const asmjit::x86::Gp & rhs) const // NOLINT
         {
-            co->xor_(r, r);
-            co->idiv(r, lhs, rhs);
-            co->mov(r, asmjit::x86::eax);
+            // use i32(lhs)/i32(rhs) -> (i8)r for byte or word
+            if (r.isGpb() or rhs.isGpw())
+            {
+                const auto _lhs = i32();
+                const auto _rhs = i32();
+                const auto _r = i32();
+
+                co->movzx(_lhs, lhs);
+                co->movzx(_rhs, rhs);
+                div(_r, _lhs, _rhs);
+                co->movzx(r, _r);
+            } else
+            {
+                co->xor_(r, r);
+                co->idiv(r, lhs, rhs);
+
+                if (r.isGp64())
+                    co->mov(r, asmjit::x86::rax);
+                else
+                    co->mov(r, asmjit::x86::eax);
+            }
+           }
+
+        void mod(const asmjit::x86::Gp & r, const asmjit::x86::Gp & lhs,const asmjit::x86::Gp & rhs) const // NOLINT
+        {
+            // use i32(lhs)%i32(rhs) -> (i8)r for byte or word
+            if (r.isGpb() or rhs.isGpw())
+            {
+                const auto _lhs = i32();
+                const auto _rhs = i32();
+                const auto _r = i32();
+
+                co->movzx(_lhs, lhs);
+                co->movzx(_rhs, rhs);
+                mod(_r, _lhs, _rhs); // NOLINT
+                co->movzx(r, _r);
+            } else
+            {
+                co->xor_(r, r);
+                co->idiv(r, lhs, rhs);
+            }
         }
 
-        void mod(const asmjit::x86::Gp & r, const asmjit::x86::Gp & lhs,const asmjit::x86::Gp & rhs) const
+        void increment(const asmjit::x86::Gp & r) const
         {
-            co->xor_(r, r);
-            co->idiv(r, lhs, rhs);
+            co->inc(r);
+        }
+
+        void increment(const asmjit::x86::Xmm & r)
+        {
+            add(r, r, xmmss(1.0f));
+        }
+
+        void decrement(const asmjit::x86::Gp & r) const
+        {
+            co->dec(r);
+        }
+
+        void decrement(const asmjit::x86::Xmm & r)
+        {
+            sub(r, r, xmmss(1.0f));
         }
 
         void return_value(const asmjit::x86::Gp & r) const
         {
-            if (signature.ret() != asmjit::TypeId::kInt32 and signature.ret() != asmjit::TypeId::kInt8)
-                throw std::runtime_error(fmt::format("Return type, does not match function signature {}", static_cast<int>(signature.ret())));
+            if (signature.ret() != asmjit::TypeId::kInt64 and signature.ret() != asmjit::TypeId::kInt32 and signature.ret() != asmjit::TypeId::kInt16 and signature.ret() != asmjit::TypeId::kInt8)
+                throw std::runtime_error(fmt::format("Return type, does not match function signature or inst supported {}", static_cast<int>(signature.ret())));
             co->ret(r);
         }
 
         void return_value(const asmjit::x86::Xmm & r) const
         {
-            if (signature.ret() != asmjit::TypeId::kFloat32 and signature.ret() != asmjit::TypeId::kFloat64)
-                throw std::runtime_error(fmt::format("Return type, does not match function signature {}", static_cast<int>(signature.ret())));
+            if (signature.ret() != asmjit::TypeId::kFloat64 and signature.ret() != asmjit::TypeId::kFloat32)
+                throw std::runtime_error(fmt::format("Return type, does not match function signature or inst supported {}", static_cast<int>(signature.ret())));
             co->ret(r);
         }
 
@@ -317,17 +424,17 @@ namespace supernova::jit
         }
 
         /// TODO: TEST[x]
-        void call(const asmjit::Imm& func, const asmjit::FuncSignature & signature, std::vector<asmjit::x86::Reg> args, std::optional<asmjit::x86::Reg> return_to) const
+        void call(const asmjit::Imm& func, const asmjit::FuncSignature & signature, const std::vector<asmjit::x86::Reg> & args, const std::optional<asmjit::x86::Reg> & return_to) const
         {
-            asmjit::InvokeNode * node = NULL;
+            asmjit::InvokeNode * node = nullptr;
             if (args.size() != signature.argCount())
                 throw std::invalid_argument("incorrect number of arguments");
             co->invoke(&node, func, signature);
             for (int i = 0; i < args.size(); i++)
             {
-                if (not (args[i].isGp32() or args[i].isXmm()))
+                if (not (args[i].isGp64() or args[i].isGp32()  or args[i].isGpb() or args[i].isXmm()))
                     throw std::invalid_argument(fmt::format("unsupported callee argument type for arg[{}]: {}", i, static_cast<int>(asmjit::x86::Reg::typeIdOf(args[i].type()))));
-                if (args[i].isGp32() and signature.arg(i) != asmjit::TypeId::kInt32 or args[i].isXmm() and signature.arg(i) != asmjit::TypeId::kFloat32)
+                if (args[i].isGpb() and signature.arg(i) != asmjit::TypeId::kInt8 or args[i].isGp64() and signature.arg(i) != asmjit::TypeId::kInt64 or args[i].isGp32() and signature.arg(i) != asmjit::TypeId::kInt32 or args[i].isXmm() and signature.arg(i) != asmjit::TypeId::kFloat32)
                     throw std::invalid_argument(fmt::format("incorrect callee argument type for arg[{}]: {}, expected: {}", i,static_cast<int>(asmjit::x86::Reg::typeIdOf(args[i].type())),static_cast<int>(signature.arg(i))));
                 node->setArg(i, args[i]);
             }
@@ -351,18 +458,17 @@ namespace supernova::jit
             if (const asmjit::Error e = rt->add(&function, &*code))
             {
                 throw std::runtime_error(fmt::format("Error {}", asmjit::DebugUtils::errorAsString(e)));
-                return nullptr;
             }
             return static_cast<FT*>(function);
         }
     };
 
-    std::shared_ptr<function_builder> function_builder::create(std::shared_ptr<asmjit::JitRuntime> rt, bool logger)
+    inline std::shared_ptr<function_builder> function_builder::create(const std::shared_ptr<asmjit::JitRuntime> & rt, const bool & logger)
     {
         return create(rt, asmjit::FuncSignature::build<void>(), logger);
     }
 
-    std::shared_ptr<function_builder> function_builder::create(std::shared_ptr<asmjit::JitRuntime> rt, asmjit::FuncSignature signature, bool logger)
+    inline std::shared_ptr<function_builder> function_builder::create(const std::shared_ptr<asmjit::JitRuntime> & rt, const asmjit::FuncSignature & signature, const bool & logger)
     {
         auto func = std::make_shared<struct function_builder>();
         func->rt = rt;
