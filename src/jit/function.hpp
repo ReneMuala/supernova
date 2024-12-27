@@ -190,7 +190,6 @@ namespace supernova::jit
                 const auto _lhs = i32();
                 const auto _rhs = i32();
                 const auto _r = i32();
-
                 co->movzx(_lhs, lhs);
                 co->movzx(_rhs, rhs);
                 mul(_r, _lhs, _rhs);
