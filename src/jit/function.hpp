@@ -70,22 +70,41 @@ namespace supernova::jit
             return i16_consts[val];
         }
 
-        [[nodiscard]] asmjit::x86::Xmm xmmss() const
+        [[nodiscard]] asmjit::x86::Xmm f32() const
         {
             return co->newXmmSs();
         }
 
-        [[nodiscard]] asmjit::x86::Xmm xmmss(const float val)
+        [[nodiscard]] asmjit::x86::Xmm f32(const float val)
         {
-            asmjit::x86::Xmm initialized_xmms = xmmss();
-            move(initialized_xmms, xmmss_const(val));
-            return initialized_xmms;
+            asmjit::x86::Xmm initialized_xmm = f32();
+            move(initialized_xmm, f32_const(val));
+            return initialized_xmm;
         }
 
-        [[nodiscard]] asmjit::x86::Mem xmmss_const(const float val)
+        [[nodiscard]] asmjit::x86::Mem f32_const(const float val)
         {
             if (not xmms_consts.contains(val))
                 xmms_consts[val] = co->newFloatConst(asmjit::ConstPoolScope::kLocal, val);
+            return xmms_consts[val];
+        }
+
+        [[nodiscard]] asmjit::x86::Xmm f64() const
+        {
+            return co->newXmmSd();
+        }
+
+        [[nodiscard]] asmjit::x86::Xmm f64(const double val)
+        {
+            asmjit::x86::Xmm initialized_xmm = f64();
+            move(initialized_xmm, f64_const(val));
+            return initialized_xmm;
+        }
+
+        [[nodiscard]] asmjit::x86::Mem f64_const(const double val)
+        {
+            if (not xmms_consts.contains(val))
+                xmms_consts[val] = co->newDoubleConst(asmjit::ConstPoolScope::kLocal, val);
             return xmms_consts[val];
         }
 
@@ -160,6 +179,8 @@ namespace supernova::jit
 
         void add(const asmjit::x86::Xmm& r, const asmjit::x86::Xmm& lhs, const asmjit::x86::Xmm& rhs) const
         {
+            r.isType(asmjit::RegType::kX86_Xmm)
+            fmt::println("r type: {}", static_cast<int>(r.type()));
             co->movss(r, lhs);
             co->addss(r, rhs);
         }
@@ -291,7 +312,7 @@ namespace supernova::jit
 
         void increment(const asmjit::x86::Xmm& r)
         {
-            add(r, r, xmmss(1.0f));
+            add(r, r, f32(1.0f));
         }
 
         void decrement(const asmjit::x86::Gp& r) const // NOLINT
@@ -310,7 +331,7 @@ namespace supernova::jit
 
         void decrement(const asmjit::x86::Xmm& r)
         {
-            sub(r, r, xmmss(1.0f));
+            sub(r, r, f32(1.0f));
         }
 
         void return_value(const asmjit::x86::Gp& r) const

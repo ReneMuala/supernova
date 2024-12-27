@@ -27,14 +27,14 @@ TEST(JIT, jump_equal)
     }
 }
 
-TEST(JIT, add_xmm)
+TEST(JIT, add_f32)
 {
     using namespace supernova::jit;
     const auto rt = std::make_shared<asmjit::JitRuntime>();
     const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<float, float, float>());
-    auto arg0 = builder->xmmss();
-    auto arg1 = builder->xmmss();
-    auto result = builder->xmmss();
+    auto arg0 = builder->f32();
+    auto arg1 = builder->f32();
+    auto result = builder->f32();
     builder->fetch_argument(0, arg0);
     builder->fetch_argument(1, arg1);
     builder->add(result, arg0, arg1);
@@ -47,15 +47,36 @@ TEST(JIT, add_xmm)
         ASSERT_EQ(r, a+b);
     }
 }
-
-TEST(JIT, sub_xmm)
+/*
+TEST(JIT, add_f64)
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<double, double, double>());
+    auto arg0 = builder->f64();
+    auto arg1 = builder->f64();
+    auto result = builder->f64();
+    builder->fetch_argument(0, arg0);
+    builder->fetch_argument(1, arg1);
+    builder->add(result, arg0, arg1);
+    builder->return_value(result);
+    const auto func = builder->build<double(double, double)>();
+    ASSERT_NE(func, nullptr);
+    if (func)
+    {
+        double a = 90, b = 90, r = func(a, b);
+        ASSERT_EQ(r, a+b);
+    }
+}
+*/
+TEST(JIT, sub_f32)
 {
     using namespace supernova::jit;
     const auto rt = std::make_shared<asmjit::JitRuntime>();
     const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<float, float, float>());
-    auto arg0 = builder->xmmss();
-    auto arg1 = builder->xmmss();
-    auto result = builder->xmmss();
+    auto arg0 = builder->f32();
+    auto arg1 = builder->f32();
+    auto result = builder->f32();
     builder->fetch_argument(0, arg0);
     builder->fetch_argument(1, arg1);
     builder->sub(result, arg0, arg1);
@@ -69,14 +90,14 @@ TEST(JIT, sub_xmm)
     }
 }
 
-TEST(JIT, mul_xmm)
+TEST(JIT, mul_f32)
 {
     using namespace supernova::jit;
     const auto rt = std::make_shared<asmjit::JitRuntime>();
     const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<float, float, float>());
-    auto arg0 = builder->xmmss();
-    auto arg1 = builder->xmmss();
-    auto result = builder->xmmss();
+    auto arg0 = builder->f32();
+    auto arg1 = builder->f32();
+    auto result = builder->f32();
     builder->fetch_argument(0, arg0);
     builder->fetch_argument(1, arg1);
     builder->mul(result, arg0, arg1);
@@ -90,14 +111,14 @@ TEST(JIT, mul_xmm)
     }
 }
 
-TEST(JIT, div_xmm)
+TEST(JIT, div_f32)
 {
     using namespace supernova::jit;
     const auto rt = std::make_shared<asmjit::JitRuntime>();
     const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<float, float, float>());
-    auto arg0 = builder->xmmss();
-    auto arg1 = builder->xmmss();
-    auto result = builder->xmmss();
+    auto arg0 = builder->f32();
+    auto arg1 = builder->f32();
+    auto result = builder->f32();
     builder->fetch_argument(0, arg0);
     builder->fetch_argument(1, arg1);
     builder->div(result, arg0, arg1);
@@ -589,9 +610,9 @@ TEST(JIT, native_call_args)
     auto b = builder->i32(_b);
     auto c = builder->i32(_c);
 
-    auto d = builder->xmmss(_d);
-    auto e = builder->xmmss(_e);
-    auto f = builder->xmmss(_f);
+    auto d = builder->f32(_d);
+    auto e = builder->f32(_e);
+    auto f = builder->f32(_f);
 
     auto g = builder->i64(_g);
     auto h = builder->i64(_h);
@@ -644,10 +665,10 @@ TEST(JIT, native_call_args_return)
     auto b = builder->i32(_b);
     auto c = builder->i32(_c);
 
-    auto d = builder->xmmss(_d);
-    auto e = builder->xmmss(_e);
-    auto f = builder->xmmss(_f);
-    auto r = builder->xmmss();
+    auto d = builder->f32(_d);
+    auto e = builder->f32(_e);
+    auto f = builder->f32(_f);
+    auto r = builder->f32();
 
     builder->call(native_function_args_return, asmjit::FuncSignature::build<float, int, int, int, float, float, float>(),{a, b, c, d, e, f},{r});
     builder->return_value(r);
@@ -736,12 +757,12 @@ TEST(JIT, increment_i64)
     }
 }
 
-TEST(JIT, increment_xmm)
+TEST(JIT, increment_f32)
 {
     using namespace supernova::jit;
     const auto rt = std::make_shared<asmjit::JitRuntime>();
     const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<float>());
-    auto result = builder->xmmss(40);
+    auto result = builder->f32(40);
     builder->increment(result);
     builder->return_value(result);
     const auto func = builder->build<float()>();
@@ -822,12 +843,12 @@ TEST(JIT, decrement_i64)
     }
 }
 
-TEST(JIT, decrement_xmm)
+TEST(JIT, decrement_f32)
 {
     using namespace supernova::jit;
     const auto rt = std::make_shared<asmjit::JitRuntime>();
     const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<float>());
-    auto result = builder->xmmss(40);
+    auto result = builder->f32(40);
     builder->decrement(result);
     builder->return_value(result);
     const auto func = builder->build<float()>();
