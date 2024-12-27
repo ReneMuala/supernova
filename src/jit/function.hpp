@@ -179,7 +179,7 @@ namespace supernova::jit
 
         void add(const asmjit::x86::Xmm& r, const asmjit::x86::Xmm& lhs, const asmjit::x86::Xmm& rhs) const
         {
-            r.isType(asmjit::RegType::kX86_Xmm)
+            // r.isType(asmjit::RegType::kX86_Xmm);
             fmt::println("r type: {}", static_cast<int>(r.type()));
             co->movss(r, lhs);
             co->addss(r, rhs);
