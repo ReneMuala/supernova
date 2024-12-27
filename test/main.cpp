@@ -27,6 +27,328 @@ TEST(JIT, jump_equal)
     }
 }
 
+TEST(JIT, jump_equal_case_different_value)
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<int>());
+    asmjit::x86::Gp arg0 = builder->i32(-40);
+    asmjit::x86::Gp arg1 = builder->i32(40);
+    asmjit::x86::Gp result = builder->i32(1);
+
+    const auto end = builder->label();
+    builder->jump_equal(arg0, arg1, end);
+    builder->move(result, builder->i32_const(0));
+    builder->bind(end);
+    builder->return_value(result);
+    const auto func = builder->build<int()>();
+    ASSERT_NE(func, nullptr);
+    if (func)
+    {
+        int  r = func();
+        ASSERT_EQ(r, 0);
+    }
+}
+
+TEST(JIT, jump_not_equal)
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<int>());
+    asmjit::x86::Gp arg0 = builder->i32(4);
+    asmjit::x86::Gp arg1 = builder->i32(40);
+    asmjit::x86::Gp result = builder->i32(1);
+
+    const auto end = builder->label();
+    builder->jump_not_equal(arg0, arg1, end);
+    builder->move(result, builder->i32_const(0));
+    builder->bind(end);
+    builder->return_value(result);
+    const auto func = builder->build<int()>();
+    ASSERT_NE(func, nullptr);
+    if (func)
+    {
+        int  r = func();
+        ASSERT_EQ(r, 1);
+    }
+}
+
+TEST(JIT, jump_not_equal_case_equal_value)
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<int>());
+    asmjit::x86::Gp arg0 = builder->i32(40);
+    asmjit::x86::Gp arg1 = builder->i32(40);
+    asmjit::x86::Gp result = builder->i32(1);
+
+    const auto end = builder->label();
+    builder->jump_not_equal(arg0, arg1, end);
+    builder->move(result, builder->i32_const(0));
+    builder->bind(end);
+    builder->return_value(result);
+    const auto func = builder->build<int()>();
+    ASSERT_NE(func, nullptr);
+    if (func)
+    {
+        int  r = func();
+        ASSERT_EQ(r, 0);
+    }
+}
+
+TEST(JIT, jump_lower)
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<int>());
+    asmjit::x86::Gp arg0 = builder->i32(39);
+    asmjit::x86::Gp arg1 = builder->i32(40);
+    asmjit::x86::Gp result = builder->i32(1);
+
+    const auto end = builder->label();
+    builder->jump_lower(arg0, arg1, end);
+    builder->move(result, builder->i32_const(0));
+    builder->bind(end);
+    builder->return_value(result);
+    const auto func = builder->build<int()>();
+    ASSERT_NE(func, nullptr);
+    if (func)
+    {
+        int  r = func();
+        ASSERT_EQ(r, 1);
+    }
+}
+
+TEST(JIT, jump_lower_case_greater_value)
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<int>());
+    asmjit::x86::Gp arg0 = builder->i32(91);
+    asmjit::x86::Gp arg1 = builder->i32(40);
+    asmjit::x86::Gp result = builder->i32(1);
+
+    const auto end = builder->label();
+    builder->jump_lower(arg0, arg1, end);
+    builder->move(result, builder->i32_const(0));
+    builder->bind(end);
+    builder->return_value(result);
+    const auto func = builder->build<int()>();
+    ASSERT_NE(func, nullptr);
+    if (func)
+    {
+        int  r = func();
+        ASSERT_EQ(r, 0);
+    }
+}
+
+TEST(JIT, jump_lower_equal)
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<int>());
+    asmjit::x86::Gp arg0 = builder->i32(40);
+    asmjit::x86::Gp arg1 = builder->i32(40);
+    asmjit::x86::Gp result = builder->i32(1);
+
+    const auto end = builder->label();
+    builder->jump_lower_equal(arg0, arg1, end);
+    builder->move(result, builder->i32_const(0));
+    builder->bind(end);
+    builder->return_value(result);
+    const auto func = builder->build<int()>();
+    ASSERT_NE(func, nullptr);
+    if (func)
+    {
+        int  r = func();
+        ASSERT_EQ(r, 1);
+    }
+}
+
+TEST(JIT, jump_lower_equal_case_lower_value)
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<int>());
+    asmjit::x86::Gp arg0 = builder->i32(7);
+    asmjit::x86::Gp arg1 = builder->i32(40);
+    asmjit::x86::Gp result = builder->i32(1);
+
+    const auto end = builder->label();
+    builder->jump_lower_equal(arg0, arg1, end);
+    builder->move(result, builder->i32_const(0));
+    builder->bind(end);
+    builder->return_value(result);
+    const auto func = builder->build<int()>();
+    ASSERT_NE(func, nullptr);
+    if (func)
+    {
+        int  r = func();
+        ASSERT_EQ(r, 1);
+    }
+}
+
+TEST(JIT, jump_lower_equal_case_greater_value)
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<int>());
+    asmjit::x86::Gp arg0 = builder->i32(41);
+    asmjit::x86::Gp arg1 = builder->i32(40);
+    asmjit::x86::Gp result = builder->i32(1);
+
+    const auto end = builder->label();
+    builder->jump_lower_equal(arg0, arg1, end);
+    builder->move(result, builder->i32_const(0));
+    builder->bind(end);
+    builder->return_value(result);
+    const auto func = builder->build<int()>();
+    ASSERT_NE(func, nullptr);
+    if (func)
+    {
+        int  r = func();
+        ASSERT_EQ(r, 0);
+    }
+}
+
+TEST(JIT, jump_greater)
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<int>());
+    asmjit::x86::Gp arg0 = builder->i32(40);
+    asmjit::x86::Gp arg1 = builder->i32(4);
+    asmjit::x86::Gp result = builder->i32(1);
+
+    const auto end = builder->label();
+    builder->jump_greater(arg0, arg1, end);
+    builder->move(result, builder->i32_const(0));
+    builder->bind(end);
+    builder->return_value(result);
+    const auto func = builder->build<int()>();
+    ASSERT_NE(func, nullptr);
+    if (func)
+    {
+        int  r = func();
+        ASSERT_EQ(r, 1);
+    }
+}
+
+TEST(JIT, jump_greater_case_lower_value)
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<int>());
+    asmjit::x86::Gp arg0 = builder->i32(0);
+    asmjit::x86::Gp arg1 = builder->i32(1);
+    asmjit::x86::Gp result = builder->i32(1);
+
+    const auto end = builder->label();
+    builder->jump_greater(arg0, arg1, end);
+    builder->move(result, builder->i32_const(0));
+    builder->bind(end);
+    builder->return_value(result);
+    const auto func = builder->build<int()>();
+    ASSERT_NE(func, nullptr);
+    if (func)
+    {
+        int  r = func();
+        ASSERT_EQ(r, 0);
+    }
+}
+
+TEST(JIT, jump_greater_case_equal_value)
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<int>());
+    asmjit::x86::Gp arg0 = builder->i32(40);
+    asmjit::x86::Gp arg1 = builder->i32(40);
+    asmjit::x86::Gp result = builder->i32(1);
+
+    const auto end = builder->label();
+    builder->jump_greater(arg0, arg1, end);
+    builder->move(result, builder->i32_const(0));
+    builder->bind(end);
+    builder->return_value(result);
+    const auto func = builder->build<int()>();
+    ASSERT_NE(func, nullptr);
+    if (func)
+    {
+        int  r = func();
+        ASSERT_EQ(r, 0);
+    }
+}
+
+TEST(JIT, jump_greater_equal)
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<int>());
+    asmjit::x86::Gp arg0 = builder->i32(40);
+    asmjit::x86::Gp arg1 = builder->i32(10);
+    asmjit::x86::Gp result = builder->i32(1);
+
+    const auto end = builder->label();
+    builder->jump_greater_equal(arg0, arg1, end);
+    builder->move(result, builder->i32_const(0));
+    builder->bind(end);
+    builder->return_value(result);
+    const auto func = builder->build<int()>();
+    ASSERT_NE(func, nullptr);
+    if (func)
+    {
+        int  r = func();
+        ASSERT_EQ(r, 1);
+    }
+}
+
+TEST(JIT, jump_greater_equal_case_equal_value)
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<int>());
+    asmjit::x86::Gp arg0 = builder->i32(40);
+    asmjit::x86::Gp arg1 = builder->i32(40);
+    asmjit::x86::Gp result = builder->i32(1);
+
+    const auto end = builder->label();
+    builder->jump_greater_equal(arg0, arg1, end);
+    builder->move(result, builder->i32_const(0));
+    builder->bind(end);
+    builder->return_value(result);
+    const auto func = builder->build<int()>();
+    ASSERT_NE(func, nullptr);
+    if (func)
+    {
+        int  r = func();
+        ASSERT_EQ(r, 1);
+    }
+}
+
+TEST(JIT, jump_greater_equal_case_lower_value)
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<int>());
+    asmjit::x86::Gp arg0 = builder->i32(4);
+    asmjit::x86::Gp arg1 = builder->i32(40);
+    asmjit::x86::Gp result = builder->i32(1);
+
+    const auto end = builder->label();
+    builder->jump_greater_equal(arg0, arg1, end);
+    builder->move(result, builder->i32_const(0));
+    builder->bind(end);
+    builder->return_value(result);
+    const auto func = builder->build<int()>();
+    ASSERT_NE(func, nullptr);
+    if (func)
+    {
+        int  r = func();
+        ASSERT_EQ(r, 0);
+    }
+}
+
 TEST(JIT, add_f32)
 {
     using namespace supernova::jit;
@@ -47,7 +369,7 @@ TEST(JIT, add_f32)
         ASSERT_EQ(r, a+b);
     }
 }
-/*
+
 TEST(JIT, add_f64)
 {
     using namespace supernova::jit;
@@ -68,7 +390,70 @@ TEST(JIT, add_f64)
         ASSERT_EQ(r, a+b);
     }
 }
-*/
+
+TEST(JIT, sub_f64)
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<double, double, double>());
+    auto arg0 = builder->f64();
+    auto arg1 = builder->f64();
+    auto result = builder->f64();
+    builder->fetch_argument(0, arg0);
+    builder->fetch_argument(1, arg1);
+    builder->sub(result, arg0, arg1);
+    builder->return_value(result);
+    const auto func = builder->build<double(double, double)>();
+    ASSERT_NE(func, nullptr);
+    if (func)
+    {
+        double a = 90, b = 90, r = func(a, b);
+        ASSERT_EQ(r, a-b);
+    }
+}
+
+TEST(JIT, mul_f64)
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<double, double, double>());
+    auto arg0 = builder->f64();
+    auto arg1 = builder->f64();
+    auto result = builder->f64();
+    builder->fetch_argument(0, arg0);
+    builder->fetch_argument(1, arg1);
+    builder->mul(result, arg0, arg1);
+    builder->return_value(result);
+    const auto func = builder->build<double(double, double)>();
+    ASSERT_NE(func, nullptr);
+    if (func)
+    {
+        double a = 90, b = 90, r = func(a, b);
+        ASSERT_EQ(r, a*b);
+    }
+}
+
+TEST(JIT, div_f64)
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<double, double, double>());
+    auto arg0 = builder->f64();
+    auto arg1 = builder->f64();
+    auto result = builder->f64();
+    builder->fetch_argument(0, arg0);
+    builder->fetch_argument(1, arg1);
+    builder->div(result, arg0, arg1);
+    builder->return_value(result);
+    const auto func = builder->build<double(double, double)>();
+    ASSERT_NE(func, nullptr);
+    if (func)
+    {
+        double a = 90, b = 90, r = func(a, b);
+        ASSERT_EQ(r, a/b);
+    }
+}
+
 TEST(JIT, sub_f32)
 {
     using namespace supernova::jit;
@@ -153,7 +538,6 @@ TEST(JIT, add_i8)
     }
 }
 
-
 TEST(JIT, sub_i8)
 {
     using namespace supernova::jit;
@@ -195,7 +579,6 @@ TEST(JIT, mul_i8)
         ASSERT_EQ(r, static_cast<char>(a * b));
     }
 }
-
 
 TEST(JIT, div_i8)
 {
@@ -343,8 +726,6 @@ TEST(JIT, mod_i16)
         ASSERT_EQ(r, static_cast<short>(a % b));
     }
 }
-
-
 
 TEST(JIT, add_i32)
 {
@@ -771,6 +1152,41 @@ TEST(JIT, increment_f32)
     {
         float  r = func();
         ASSERT_EQ(r, 41);
+    }
+}
+
+
+TEST(JIT, increment_f64)
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<double>());
+    auto result = builder->f64(40);
+    builder->increment(result);
+    builder->return_value(result);
+    const auto func = builder->build<double()>();
+    ASSERT_NE(func, nullptr);
+    if (func)
+    {
+        double r = func();
+        ASSERT_EQ(r, 41);
+    }
+}
+
+TEST(JIT, decrement_f64)
+{
+    using namespace supernova::jit;
+    const auto rt = std::make_shared<asmjit::JitRuntime>();
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<double>());
+    auto result = builder->f64(40);
+    builder->decrement(result);
+    builder->return_value(result);
+    const auto func = builder->build<double()>();
+    ASSERT_NE(func, nullptr);
+    if (func)
+    {
+        double r = func();
+        ASSERT_EQ(r, 39);
     }
 }
 
