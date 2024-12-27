@@ -115,7 +115,7 @@ TEST(JIT, add_i8)
 {
     using namespace supernova::jit;
     const auto rt = std::make_shared<asmjit::JitRuntime>();
-    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<char, char, char>(), true);
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<char, char, char>(), false);
     auto arg0 = builder->i8();
     auto arg1 = builder->i8();
     auto result = builder->i8();
@@ -127,8 +127,8 @@ TEST(JIT, add_i8)
     ASSERT_NE(func, nullptr);
     if (func)
     {
-        char a = 50, b = 50, r = func(a, b);
-        ASSERT_EQ(r, a+b);
+        char a = 120, b = 50, r = func(a, b);
+        ASSERT_EQ(r, static_cast<char>(a + b));
     }
 }
 
@@ -150,7 +150,7 @@ TEST(JIT, sub_i8)
     if (func)
     {
         char a = 90, b = 90, r = func(a, b);
-        ASSERT_EQ(r, a-b);
+        ASSERT_EQ(r, static_cast<char>(a - b));
     }
 }
 
@@ -171,7 +171,7 @@ TEST(JIT, mul_i8)
     if (func)
     {
         char a = 5, b = 5, r = func(a, b);
-        ASSERT_EQ(r, a*b);
+        ASSERT_EQ(r, static_cast<char>(a * b));
     }
 }
 
@@ -193,7 +193,7 @@ TEST(JIT, div_i8)
     if (func)
     {
         char a = 5, b = 5, r = func(a, b);
-        ASSERT_EQ(r, a/b);
+        ASSERT_EQ(r, static_cast<char>(a / b));
     }
 }
 
@@ -213,8 +213,8 @@ TEST(JIT, mod_i8)
     ASSERT_NE(func, nullptr);
     if (func)
     {
-        char a = 500, b = 500, r = func(a, b);
-        ASSERT_EQ(r, a%b);
+        char a = 50, b = 40, r = func(a, b);
+        ASSERT_EQ(r, static_cast<char>(a % b));
     }
 }
 
@@ -235,7 +235,7 @@ TEST(JIT, add_i16)
     if (func)
     {
         short a = 50, b = 50, r = func(a, b);
-        ASSERT_EQ(r, a+b);
+        ASSERT_EQ(r, static_cast<short>(a + b));
     }
 }
 
@@ -256,7 +256,7 @@ TEST(JIT, sub_i16)
     if (func)
     {
         short a = 50, b = 50, r = func(a, b);
-        ASSERT_EQ(r, a-b);
+        ASSERT_EQ(r, static_cast<short>(a - b));
     }
 }
 
@@ -277,7 +277,7 @@ TEST(JIT, mul_i16)
     if (func)
     {
         short a = 50, b = 50, r = func(a, b);
-        ASSERT_EQ(r, a*b);
+        ASSERT_EQ(r, static_cast<short>(a * b));
     }
 }
 
@@ -298,7 +298,7 @@ TEST(JIT, div_i16)
     if (func)
     {
         short a = 50, b = 50, r = func(a, b);
-        ASSERT_EQ(r, a/b);
+        ASSERT_EQ(r, static_cast<short>(a / b));
     }
 }
 
@@ -319,7 +319,7 @@ TEST(JIT, mod_i16)
     if (func)
     {
         short a = 50, b = 50, r = func(a, b);
-        ASSERT_EQ(r, a%b);
+        ASSERT_EQ(r, static_cast<short>(a % b));
     }
 }
 
