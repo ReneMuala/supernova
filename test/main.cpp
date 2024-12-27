@@ -115,7 +115,7 @@ TEST(JIT, add_i8)
 {
     using namespace supernova::jit;
     const auto rt = std::make_shared<asmjit::JitRuntime>();
-    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<char, char, char>());
+    const std::shared_ptr<function_builder> builder = function_builder::create(rt, asmjit::FuncSignature::build<char, char, char>(), true);
     auto arg0 = builder->i8();
     auto arg1 = builder->i8();
     auto result = builder->i8();

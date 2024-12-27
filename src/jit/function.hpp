@@ -8,6 +8,7 @@
 #include <fmt/core.h>
 #include <vector>
 #include <optional>
+
 namespace supernova::jit
 {
     struct function_builder
@@ -22,11 +23,14 @@ namespace supernova::jit
         std::shared_ptr<asmjit::x86::Compiler> co;
         asmjit::FuncSignature signature;
         asmjit::FileLogger logger{stdout};
-        asmjit::FuncNode * node{nullptr};
-        void *function{nullptr};
+        asmjit::FuncNode* node{nullptr};
+        void* function{nullptr};
 
-        static std::shared_ptr<function_builder> create(const std::shared_ptr<asmjit::JitRuntime>& rt, const bool& logger = false);
-        static std::shared_ptr<function_builder> create(const std::shared_ptr<asmjit::JitRuntime>& rt, const asmjit::FuncSignature& signature, const bool& logger = false);
+        static std::shared_ptr<function_builder> create(const std::shared_ptr<asmjit::JitRuntime>& rt,
+                                                        const bool& logger = false);
+        static std::shared_ptr<function_builder> create(const std::shared_ptr<asmjit::JitRuntime>& rt,
+                                                        const asmjit::FuncSignature& signature,
+                                                        const bool& logger = false);
 
         [[nodiscard]] asmjit::x86::Gp i8() const
         {
@@ -66,7 +70,6 @@ namespace supernova::jit
             return i16_consts[val];
         }
 
-
         [[nodiscard]] asmjit::x86::Xmm xmmss() const
         {
             return co->newXmmSs();
@@ -105,6 +108,15 @@ namespace supernova::jit
             return i32_consts[val];
         }
 
+        [[nodiscard]] asmjit::x86::Gp i32fromI8or16(const asmjit::x86::Gp & i8or16) const
+        {
+            if (not (i8or16.isGpb() or i8or16.isGpw()))
+                throw std::invalid_argument(fmt::format("invalid i8 or i16 value"));
+            asmjit::x86::Gp initialized_gp = i32();
+            co->movzx(initialized_gp, i8or16);
+            return initialized_gp;
+        }
+
         [[nodiscard]] asmjit::x86::Gp i64() const
         {
             return co->newInt64();
@@ -134,7 +146,7 @@ namespace supernova::jit
             co->bind(label);
         }
 
-        void fetch_argument(const size_t index, const asmjit::x86::Reg & r) const
+        void fetch_argument(const size_t index, const asmjit::x86::Reg& r) const
         {
             if (signature.arg(index) == asmjit::TypeId::kFloat32 and not r.isXmm())
                 throw std::runtime_error("Argument not a floating point type");
@@ -146,75 +158,94 @@ namespace supernova::jit
                 throw std::runtime_error("arg out of range");
         }
 
-        void add(const asmjit::x86::Xmm & r, const asmjit::x86::Xmm & lhs,const asmjit::x86::Xmm & rhs) const
+        void add(const asmjit::x86::Xmm& r, const asmjit::x86::Xmm& lhs, const asmjit::x86::Xmm& rhs) const
         {
             co->movss(r, lhs);
             co->addss(r, rhs);
         }
 
-        void sub(const asmjit::x86::Xmm & r, const asmjit::x86::Xmm & lhs,const asmjit::x86::Xmm & rhs) const
+        void sub(const asmjit::x86::Xmm& r, const asmjit::x86::Xmm& lhs, const asmjit::x86::Xmm& rhs) const
         {
             co->movss(r, lhs);
             co->subss(r, rhs);
         }
 
-        void mul(const asmjit::x86::Xmm & r, const asmjit::x86::Xmm & lhs,const asmjit::x86::Xmm & rhs) const
+        void mul(const asmjit::x86::Xmm& r, const asmjit::x86::Xmm& lhs, const asmjit::x86::Xmm& rhs) const
         {
             co->movss(r, lhs);
             co->mulss(r, rhs);
         }
 
-        void div(const asmjit::x86::Xmm & r, const asmjit::x86::Xmm & lhs,const asmjit::x86::Xmm & rhs) const
+        void div(const asmjit::x86::Xmm& r, const asmjit::x86::Xmm& lhs, const asmjit::x86::Xmm& rhs) const
         {
             co->movss(r, lhs);
             co->divss(r, rhs);
         }
 
-        void add(const asmjit::x86::Gp & r, const asmjit::x86::Gp & lhs,const asmjit::x86::Gp & rhs) const
+        void add(const asmjit::x86::Gp& r, const asmjit::x86::Gp& lhs, const asmjit::x86::Gp& rhs) const // NOLINT
         {
-            co->mov(r, lhs);
-            co->add(r, rhs);
+            // use i32 for byte or word
+            if (rhs.isGpb() or rhs.isGpw())
+            {
+                const auto _lhs = i32fromI8or16(lhs);
+                const auto _rhs = i32fromI8or16(rhs);
+                const auto _r = i32();
+                add(_r, _lhs, _rhs);
+                co->movzx(r, _r);
+            } else
+            {
+                co->mov(r, lhs);
+                co->add(r, rhs);
+            }
         }
 
-        void sub(const asmjit::x86::Gp & r, const asmjit::x86::Gp & lhs,const asmjit::x86::Gp & rhs) const
+        void sub(const asmjit::x86::Gp& r, const asmjit::x86::Gp& lhs, const asmjit::x86::Gp& rhs) const //NOLINT
         {
-            co->mov(r, lhs);
-            co->sub(r, rhs);
+            // use i32 for byte or word
+            if (rhs.isGpb() or rhs.isGpw())
+            {
+                const auto _lhs = i32fromI8or16(lhs);
+                const auto _rhs = i32fromI8or16(rhs);
+                const auto _r = i32();
+                sub(_r, _lhs, _rhs);
+                co->movzx(r, _r);
+            } else
+            {
+                co->mov(r, lhs);
+                co->sub(r, rhs);
+            }
         }
 
-        void mul(const asmjit::x86::Gp & r, const asmjit::x86::Gp & lhs,const asmjit::x86::Gp & rhs) const // NOLINT
+        void mul(const asmjit::x86::Gp& r, const asmjit::x86::Gp& lhs, const asmjit::x86::Gp& rhs) const // NOLINT
         {
             // use i32(lhs)*i32(rhs) -> (i8)r for byte or word
             if (r.isGpb() or rhs.isGpw())
             {
-                const auto _lhs = i32();
-                const auto _rhs = i32();
+                const auto _lhs = i32fromI8or16(lhs);
+                const auto _rhs = i32fromI8or16(rhs);
                 const auto _r = i32();
-                co->movzx(_lhs, lhs);
-                co->movzx(_rhs, rhs);
                 mul(_r, _lhs, _rhs);
                 co->movzx(r, _r);
-            } else
+            }
+            else
             {
-            co->mov(r, lhs);
-            co->imul(r, rhs);
+                co->mov(r, lhs);
+                co->imul(r, rhs);
             }
         }
 
-        void div(const asmjit::x86::Gp & r, const asmjit::x86::Gp & lhs,const asmjit::x86::Gp & rhs) const // NOLINT
+        void div(const asmjit::x86::Gp& r, const asmjit::x86::Gp& lhs, const asmjit::x86::Gp& rhs) const // NOLINT
         {
-            // use i32(lhs)/i32(rhs) -> (i8)r for byte or word
-            if (r.isGpb() or rhs.isGpw())
+            // use i32 for byte or word
+            if (rhs.isGpb() or rhs.isGpw())
             {
-                const auto _lhs = i32();
-                const auto _rhs = i32();
+                const auto _lhs = i32fromI8or16(lhs);
+                const auto _rhs = i32fromI8or16(rhs);
                 const auto _r = i32();
-
-                co->movzx(_lhs, lhs);
-                co->movzx(_rhs, rhs);
                 div(_r, _lhs, _rhs);
                 co->movzx(r, _r);
-            } else
+            }
+            else
             {
                 co->xor_(r, r);
                 co->idiv(r, lhs, rhs);
@@ -224,59 +255,80 @@ namespace supernova::jit
                 else
                     co->mov(r, asmjit::x86::eax);
             }
-           }
+        }
 
-        void mod(const asmjit::x86::Gp & r, const asmjit::x86::Gp & lhs,const asmjit::x86::Gp & rhs) const // NOLINT
+        void mod(const asmjit::x86::Gp& r, const asmjit::x86::Gp& lhs, const asmjit::x86::Gp& rhs) const // NOLINT
         {
-            // use i32(lhs)%i32(rhs) -> (i8)r for byte or word
-            if (r.isGpb() or rhs.isGpw())
+            // use i32 for byte or word
+            if (rhs.isGpb() or rhs.isGpw())
             {
-                const auto _lhs = i32();
-                const auto _rhs = i32();
+                const auto _lhs = i32fromI8or16(lhs);
+                const auto _rhs = i32fromI8or16(rhs);
                 const auto _r = i32();
-
-                co->movzx(_lhs, lhs);
-                co->movzx(_rhs, rhs);
-                mod(_r, _lhs, _rhs); // NOLINT
+                mod(_r, _lhs, _rhs);
                 co->movzx(r, _r);
-            } else
+            }
+            else
             {
                 co->xor_(r, r);
                 co->idiv(r, lhs, rhs);
             }
         }
 
-        void increment(const asmjit::x86::Gp & r) const
+        void increment(const asmjit::x86::Gp& r) const // NOLINT
         {
-            co->inc(r);
+            // use i32 for byte or word
+            if (r.isGpb() or r.isGpw())
+            {
+                const auto _r = i32fromI8or16(r);
+                increment(_r);
+                co->movzx(r, _r);
+            } else
+            {
+                co->inc(r);
+            }
         }
 
-        void increment(const asmjit::x86::Xmm & r)
+        void increment(const asmjit::x86::Xmm& r)
         {
             add(r, r, xmmss(1.0f));
         }
 
-        void decrement(const asmjit::x86::Gp & r) const
+        void decrement(const asmjit::x86::Gp& r) const // NOLINT
         {
-            co->dec(r);
+            // use i32 for byte or word
+            if (r.isGpb() or r.isGpw())
+            {
+                const auto _r = i32fromI8or16(r);
+                decrement(_r);
+                co->movzx(r, _r);
+            } else
+            {
+                co->dec(r);
+            }
         }
 
-        void decrement(const asmjit::x86::Xmm & r)
+        void decrement(const asmjit::x86::Xmm& r)
         {
             sub(r, r, xmmss(1.0f));
         }
 
-        void return_value(const asmjit::x86::Gp & r) const
+        void return_value(const asmjit::x86::Gp& r) const
         {
-            if (signature.ret() != asmjit::TypeId::kInt64 and signature.ret() != asmjit::TypeId::kInt32 and signature.ret() != asmjit::TypeId::kInt16 and signature.ret() != asmjit::TypeId::kInt8)
-                throw std::runtime_error(fmt::format("Return type, does not match function signature or inst supported {}", static_cast<int>(signature.ret())));
+            if (signature.ret() != asmjit::TypeId::kInt64 and signature.ret() != asmjit::TypeId::kInt32 and signature.
+                ret() != asmjit::TypeId::kInt16 and signature.ret() != asmjit::TypeId::kInt8)
+                throw std::runtime_error(fmt::format(
+                    "Return type, does not match function signature or inst supported {}",
+                    static_cast<int>(signature.ret())));
             co->ret(r);
         }
 
-        void return_value(const asmjit::x86::Xmm & r) const
+        void return_value(const asmjit::x86::Xmm& r) const
         {
             if (signature.ret() != asmjit::TypeId::kFloat64 and signature.ret() != asmjit::TypeId::kFloat32)
-                throw std::runtime_error(fmt::format("Return type, does not match function signature or inst supported {}", static_cast<int>(signature.ret())));
+                throw std::runtime_error(fmt::format(
+                    "Return type, does not match function signature or inst supported {}",
+                    static_cast<int>(signature.ret())));
             co->ret(r);
         }
 
@@ -288,18 +340,18 @@ namespace supernova::jit
         }
 
         /// TODO: TEST[]
-        void compare(const asmjit::x86::Gp & lhs,const asmjit::x86::Gp & rhs) const
+        void compare(const asmjit::x86::Gp& lhs, const asmjit::x86::Gp& rhs) const
         {
             co->cmp(lhs, rhs);
         }
 
         /// TODO: TEST[]
-        void compare(const asmjit::x86::Xmm & lhs,const asmjit::x86::Xmm & rhs, const bool possible_equal = false) const
+        void compare(const asmjit::x86::Xmm& lhs, const asmjit::x86::Xmm& rhs, const bool possible_equal = false) const
         {
-            if(possible_equal)
-               co->ucomiss(lhs, rhs);
+            if (possible_equal)
+                co->ucomiss(lhs, rhs);
             else
-               co->comiss(lhs, rhs);
+                co->comiss(lhs, rhs);
         }
 
         /// TODO: TEST[]
@@ -395,7 +447,7 @@ namespace supernova::jit
         /// TODO: TEST[x]
         void move(const asmjit::x86::Gp& to, const asmjit::x86::Gp& from, const bool is_char = false) const
         {
-            if(is_char)
+            if (is_char)
                 co->movzx(to, from);
             else
                 co->mov(to, from);
@@ -404,7 +456,7 @@ namespace supernova::jit
         /// TODO: TEST[x]
         void move(const asmjit::x86::Gp& to, const asmjit::x86::Mem& from, const bool is_char = false) const
         {
-            if(is_char)
+            if (is_char)
                 co->movzx(to, from);
             else
                 co->mov(to, from);
@@ -423,26 +475,38 @@ namespace supernova::jit
         }
 
         /// TODO: TEST[x]
-        void call(const asmjit::Imm& func, const asmjit::FuncSignature & signature, const std::vector<asmjit::x86::Reg> & args, const std::optional<asmjit::x86::Reg> & return_to) const
+        void call(const asmjit::Imm& func, const asmjit::FuncSignature& signature,
+                  const std::vector<asmjit::x86::Reg>& args, const std::optional<asmjit::x86::Reg>& return_to) const
         {
-            asmjit::InvokeNode * node = nullptr;
+            asmjit::InvokeNode* node = nullptr;
             if (args.size() != signature.argCount())
                 throw std::invalid_argument("incorrect number of arguments");
             co->invoke(&node, func, signature);
             for (int i = 0; i < args.size(); i++)
             {
-                if (not (args[i].isGp64() or args[i].isGp32()  or args[i].isGpb() or args[i].isXmm()))
-                    throw std::invalid_argument(fmt::format("unsupported callee argument type for arg[{}]: {}", i, static_cast<int>(asmjit::x86::Reg::typeIdOf(args[i].type()))));
-                if (args[i].isGpb() and signature.arg(i) != asmjit::TypeId::kInt8 or args[i].isGp64() and signature.arg(i) != asmjit::TypeId::kInt64 or args[i].isGp32() and signature.arg(i) != asmjit::TypeId::kInt32 or args[i].isXmm() and signature.arg(i) != asmjit::TypeId::kFloat32)
-                    throw std::invalid_argument(fmt::format("incorrect callee argument type for arg[{}]: {}, expected: {}", i,static_cast<int>(asmjit::x86::Reg::typeIdOf(args[i].type())),static_cast<int>(signature.arg(i))));
+                if (not(args[i].isGp64() or args[i].isGp32() or args[i].isGpb() or args[i].isXmm()))
+                    throw std::invalid_argument(fmt::format("unsupported callee argument type for arg[{}]: {}", i,
+                                                            static_cast<int>(
+                                                                asmjit::x86::Reg::typeIdOf(args[i].type()))));
+                if (args[i].isGpb() and signature.arg(i) != asmjit::TypeId::kInt8 or args[i].isGp64() and signature.
+                    arg(i) != asmjit::TypeId::kInt64 or args[i].isGp32() and signature.arg(i) != asmjit::TypeId::kInt32
+                    or args[i].isXmm() and signature.arg(i) != asmjit::TypeId::kFloat32)
+                    throw std::invalid_argument(fmt::format(
+                        "incorrect callee argument type for arg[{}]: {}, expected: {}", i,
+                        static_cast<int>(asmjit::x86::Reg::typeIdOf(args[i].type())),
+                        static_cast<int>(signature.arg(i))));
                 node->setArg(i, args[i]);
             }
             if (return_to)
             {
-                if (not (return_to->isGp32() or return_to->isXmm()))
+                if (not(return_to->isGp32() or return_to->isXmm()))
                     throw std::invalid_argument("unsupported callee return type");
-                if (return_to->isGp32() and signature.ret() != asmjit::TypeId::kInt32 or return_to->isXmm() and signature.ret() != asmjit::TypeId::kFloat32)
-                    throw std::invalid_argument(fmt::format("incorrect callee return type for {}, expected: {}", static_cast<int>(asmjit::x86::Reg::typeIdOf(return_to->type())),static_cast<int>(signature.ret())));
+                if (return_to->isGp32() and signature.ret() != asmjit::TypeId::kInt32 or return_to->isXmm() and
+                    signature.ret() != asmjit::TypeId::kFloat32)
+                    throw std::invalid_argument(fmt::format("incorrect callee return type for {}, expected: {}",
+                                                            static_cast<int>(asmjit::x86::Reg::typeIdOf(
+                                                                return_to->type())),
+                                                            static_cast<int>(signature.ret())));
                 node->setRet(0, *return_to);
             }
         }
@@ -462,12 +526,15 @@ namespace supernova::jit
         }
     };
 
-    inline std::shared_ptr<function_builder> function_builder::create(const std::shared_ptr<asmjit::JitRuntime> & rt, const bool & logger)
+    inline std::shared_ptr<function_builder> function_builder::create(const std::shared_ptr<asmjit::JitRuntime>& rt,
+                                                                      const bool& logger)
     {
         return create(rt, asmjit::FuncSignature::build<void>(), logger);
     }
 
-    inline std::shared_ptr<function_builder> function_builder::create(const std::shared_ptr<asmjit::JitRuntime> & rt, const asmjit::FuncSignature & signature, const bool & logger)
+    inline std::shared_ptr<function_builder> function_builder::create(const std::shared_ptr<asmjit::JitRuntime>& rt,
+                                                                      const asmjit::FuncSignature& signature,
+                                                                      const bool& logger)
     {
         auto func = std::make_shared<struct function_builder>();
         func->rt = rt;
@@ -482,5 +549,4 @@ namespace supernova::jit
         func->node = func->co->addFunc(func->signature);
         return func;
     }
-
 }
