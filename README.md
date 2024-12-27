@@ -1,7 +1,7 @@
 ![supernova](images/supernova.svg)
 
-# Super Nova
-A generic jit library based on [Asmjit](https://github.com/asmjit/asmjit), with a focus on simplicity and performance.
+# Supernova
+A generic jit library based on [Asmjit](https://github.com/asmjit/asmjit) with a focus on simplicity and performance.
 
 ## How it looks
 
