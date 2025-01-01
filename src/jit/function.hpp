@@ -473,6 +473,11 @@ namespace supernova::jit
             else
                 co->mov(to, from);
         }
+
+        void move(const asmjit::x86::Mem & to, const asmjit::x86::Gp& from) const
+        {
+            co->mov(to, from);
+        }
         
         void move(const XmmWrapper& to, const XmmWrapper& from) const
         {
@@ -485,6 +490,14 @@ namespace supernova::jit
         void move(const XmmWrapper& to, const asmjit::x86::Mem& from) const
         {
             if (to.is64bit)
+                co->movsd(to, from);
+            else
+                co->movss(to, from);
+        }
+
+        void move(const asmjit::x86::Mem& to, const XmmWrapper& from) const
+        {
+            if (from.is64bit)
                 co->movsd(to, from);
             else
                 co->movss(to, from);
