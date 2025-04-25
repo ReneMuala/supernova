@@ -1,5 +1,43 @@
 #include "jit/function.hpp"
 
+void playground3()
+{
+    using namespace supernova::jit;
+
+    auto rt = std::make_shared<asmjit::JitRuntime>();
+    auto builder = function_builder::create(rt, asmjit::FuncSignature::build<bool,int,int>());
+
+    auto func = builder->build<long long(long long*)>();
+    if (func)
+    {
+        long long a = 40;
+        fmt::println("func({}) = {}", a, func(&a));
+    }
+}
+
+void playground2()
+{
+    using namespace supernova::jit;
+
+    auto rt = std::make_shared<asmjit::JitRuntime>();
+    auto builder = function_builder::create(rt, asmjit::FuncSignature::build<long long, long long*>());
+    auto a = builder->i64();
+    auto b = builder->i64();
+    auto r = builder->i64();
+    builder->fetch_argument(0, a);
+    builder->move(b, asmjit::x86::dword_ptr(a));
+    builder->increment(b);
+    builder->move(r,b);
+    builder->decrement(b);
+    builder->move(asmjit::x86::dword_ptr(a),b);
+    builder->return_value(r);
+    auto func = builder->build<long long(long long*)>();
+    if (func)
+    {
+        long long a = 40;
+        fmt::println("func({}) = {}", a, func(&a));
+    }
+}
 
 void playground(bool sum)
 {
@@ -29,7 +67,8 @@ void playground(bool sum)
 int main(int argc, char** argv)
 try {
     playground(true);
-    playground(false);
+    // playground(false);
+    // playground2();
 } catch (std::exception& e)
 {
     fmt::println(stderr, "Uncaught exception:\n{}", e.what());

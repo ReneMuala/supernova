@@ -45,6 +45,7 @@ namespace supernova::jit
         {
             return co->newInt8();
         }
+
         [[nodiscard]] asmjit::x86::Gp i8(const char val)
         {
             asmjit::x86::Gp initialized_gp = i8();
@@ -512,7 +513,7 @@ namespace supernova::jit
             co->invoke(&node, func, signature);
             for (int i = 0; i < args.size(); i++)
             {
-                if (not(args[i].isGp64() or args[i].isGp32() or args[i].isGpb() or args[i].isXmm()))
+                if (not(args[i].isGp64() or args[i].isGp32() or args[i].isGpw() or args[i].isGpb() or args[i].isXmm()))
                     throw std::invalid_argument(fmt::format("unsupported callee argument type for arg[{}]: {}", i,
                                                             static_cast<int>(
                                                                 asmjit::x86::Reg::typeIdOf(args[i].type()))));

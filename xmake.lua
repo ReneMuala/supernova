@@ -1,4 +1,4 @@
-add_rules("mode.debug", "mode.release")
+add_rules("mode.debug", "mode.release", "plugin.compile_commands.autoupdate")
 add_requires("gtest", "asmjit", "fmt")
 
 target("supernova")
